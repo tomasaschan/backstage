@@ -27,8 +27,8 @@
   },
   "bin": "bin/e2e-test",
   "devDependencies": {
-    "@backstage/cli-common": "^0.1.9-next.0",
-    "@backstage/errors": "^1.1.0-next.0",
+    "@backstage/cli-common": "workspace:^",
+    "@backstage/errors": "workspace:^",
     "@types/fs-extra": "^9.0.1",
     "@types/node": "^16.11.26",
     "@types/puppeteer": "^5.4.4",

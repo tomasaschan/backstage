@@ -32,11 +32,11 @@
     "clean": "backstage-cli package clean"
   },
   "dependencies": {
-    "@backstage/types": "^1.0.0",
+    "@backstage/types": "workspace:^",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@backstage/test-utils": "^1.2.0-next.1",
+    "@backstage/test-utils": "workspace:^",
     "@types/jest": "^26.0.7",
     "@types/node": "^16.0.0"
   },
