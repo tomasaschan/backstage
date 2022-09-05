@@ -44,7 +44,7 @@ export const loggerFactory = createServiceFactory({
   deps: {},
   factory: async () => {
     const root = BackstageLogger.fromWinston(createRootLogger());
-    return async (pluginId: string) => {
+    return async (pluginId?: string) => {
       return root.child({ pluginId });
     };
   },

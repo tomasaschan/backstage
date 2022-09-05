@@ -19,6 +19,8 @@ import {
   configServiceRef,
   createServiceFactory,
   cacheServiceRef,
+  loggerServiceRef,
+  loggerToWinstonLogger,
 } from '@backstage/backend-plugin-api';
 
 /** @public */
@@ -26,12 +28,20 @@ export const cacheFactory = createServiceFactory({
   service: cacheServiceRef,
   deps: {
     configFactory: configServiceRef,
+    loggerFactory: loggerServiceRef,
   },
-  factory: async ({ configFactory }) => {
+  factory: async ({ configFactory, loggerFactory }) => {
     const config = await configFactory('root');
-    const cacheManager = CacheManager.fromConfig(config);
+    const config2 = await configFactory();
+    const config3 = await configFactory(ROOT_PLUGIN_ID);
+
+    const cacheManager = CacheManager.fromConfig(config, {
+      logger: loggerToWinstonLogger(await loggerFactory('root')),
+    });
     return async (pluginId: string) => {
-      return cacheManager.forPlugin(pluginId);
+      return cacheManager.forPlugin(pluginId, {
+        logger: loggerToWinstonLogger(await loggerFactory(pluginId)),
+      });
     };
   },
 });

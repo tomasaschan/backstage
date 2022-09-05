@@ -19,32 +19,40 @@
  *
  * @public
  */
-export type ServiceRef<T> = {
+export type ServiceRef<
+  TService,
+  TScope extends 'root' | 'plugin' = 'root' | 'plugin',
+> = {
   id: string;
+
+  /**
+   * I WILL FILL THIS IN OR EAT MY SHOE
+   */
+  scope: TScope;
 
   /**
    * Utility for getting the type of the service, using `typeof serviceRef.T`.
    * Attempting to actually read this value will result in an exception.
    */
-  T: T;
+  T: TService;
 
   toString(): string;
 
   $$ref: 'service';
 };
 
-/**
- * @internal
- */
-export type InternalServiceRef<T> = ServiceRef<T> & {
-  /**
-   * The default factory that will be used to create service
-   * instances if no other factory is provided.
-   */
-  __defaultFactory?: (
-    service: ServiceRef<T>,
-  ) => Promise<ServiceFactory<T> | (() => ServiceFactory<T>)>;
-};
+// /**
+//  * @internal
+//  */
+// export type InternalServiceRef<T> = ServiceRef<T> & {
+//   /**
+//    * The default factory that will be used to create service
+//    * instances if no other factory is provided.
+//    */
+//   __defaultFactory?: (
+//     service: ServiceRef<T>,
+//   ) => Promise<ServiceFactory<T> | (() => ServiceFactory<T>)>;
+// };
 
 /** @public */
 export type TypesToServiceRef<T> = { [key in keyof T]: ServiceRef<T[key]> };
@@ -67,15 +75,17 @@ export type ServiceFactory<TService = unknown> = {
 /**
  * @public
  */
-export function createServiceRef<T>(options: {
+export function createServiceRef<T, TScope extends 'root' | 'plugin'>(options: {
   id: string;
+  scope: TScope;
   defaultFactory?: (
     service: ServiceRef<T>,
   ) => Promise<ServiceFactory<T> | (() => ServiceFactory<T>)>;
-}): ServiceRef<T> {
-  const { id, defaultFactory } = options;
+}): ServiceRef<T, TScope> {
+  const { id, scope, defaultFactory } = options;
   return {
     id,
+    scope,
     get T(): T {
       throw new Error(`tried to read ServiceRef.T of ${this}`);
     },
@@ -84,24 +94,60 @@ export function createServiceRef<T>(options: {
     },
     $$ref: 'service', // TODO: declare
     __defaultFactory: defaultFactory,
-  } as InternalServiceRef<T>;
+  } as ServiceRef<T, TScope> & {
+    /**
+     * The default factory that will be used to create service
+     * instances if no other factory is provided.
+     */
+    __defaultFactory?: (
+      service: ServiceRef<T>,
+    ) => Promise<ServiceFactory<T> | (() => ServiceFactory<T>)>;
+  };
 }
+
+type ServiceRefScope<T extends ServiceRef<unknown>> = T extends {
+  scope?: infer TScope;
+}
+  ? TScope
+  : never;
+
+const ref1 = createServiceRef<string>({ id: 'foo', scope: 'plugin' });
+const ref2 = createServiceRef<string>({ id: 'foo', scope: 'root' });
+
+createServiceFactory({
+  service: ref1,
+  deps: {},
+  async factory() {
+    return async () => 'foo';
+  },
+});
+createServiceFactory({
+  service: ref2,
+  deps: {},
+  async factory() {
+    return 'foo';
+  },
+});
+
+type Ref1Scope = ServiceRefScope<typeof ref1>;
+type Ref2Scope = ServiceRefScope<typeof ref2>;
 
 /**
  * @public
  */
 export function createServiceFactory<
   TService,
+  TScope extends 'root' | 'plugin',
   TImpl extends TService,
   TDeps extends { [name in string]: unknown },
   TOpts extends { [name in string]: unknown } | undefined = undefined,
 >(factory: {
-  service: ServiceRef<TService>;
+  service: ServiceRef<TService, TScope>;
   deps: TypesToServiceRef<TDeps>;
   factory(
     deps: DepsToDepFactories<TDeps>,
     options: TOpts,
-  ): Promise<FactoryFunc<TImpl>>;
+  ): TScope extends 'root' ? Promise<TImpl> : Promise<FactoryFunc<TImpl>>;
 }): undefined extends TOpts
   ? (options?: TOpts) => ServiceFactory<TService>
   : (options: TOpts) => ServiceFactory<TService> {
