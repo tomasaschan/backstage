@@ -97,7 +97,7 @@ jobs:
 
       - name: test (and upload coverage)
         run: |
-          yarn workspaces foreach -v --exclude=root --parallel run test --coverage --runInBand
+          yarn workspaces foreach -v --exclude=root --parallel --jobs=4 run test --coverage --runInBand
           bash <(curl -s https://codecov.io/bash)
           # Upload code coverage for some specific flags. Also see .codecov.yml
           bash <(curl -s https://codecov.io/bash) -f packages/core-app-api/coverage/* -F core-app-api

@@ -46,7 +46,7 @@ jobs:
         run: yarn lint:type-deps
 
       - name: test
-        run: yarn workspaces foreach -v --exclude=root --parallel run test --runInBand
+        run: yarn workspaces foreach -v --exclude=root --parallel --jobs=4 run test --runInBand
         env:
           BACKSTAGE_NEXT_TESTS: 1
           BACKSTAGE_TEST_DISABLE_DOCKER: 1
